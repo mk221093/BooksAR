@@ -8,11 +8,17 @@ public class GoogleBooksAPI : MonoBehaviour
 {
 
     [System.Serializable]
+    public class ImageLinks
+    {
+        public string smallThumbnail;
+    }
+
+    [System.Serializable]
     public class VolumeInfo
     {
         public string title;
         public string[] authors;
-        //public string imageLinks;
+        public ImageLinks imageLinks;
     }
 
     [System.Serializable]
@@ -28,42 +34,61 @@ public class GoogleBooksAPI : MonoBehaviour
     }
 
 
-
-
+    private string mySearch;
     public Text tempText;
-
-    private static string apiKey = "AIzaSyBQLaLhb8IXaqgXKEvBaWPtntQHIdbQupU";    
-
-    private static string url = "https://www.googleapis.com/books/v1/volumes?q=flowers+inauthor:keyes&key=" + apiKey;
-        
+    public Text tempText2;
+    private string imgPath;
+    public GameObject bookPic;
 
 
-    public BookData bData;
+
+    private string query = "garden";
+    private static string apiKey = "AIzaSyBQLaLhb8IXaqgXKEvBaWPtntQHIdbQupU";
+
+
+
+    public static BookData bData;
 
     IEnumerator Start()
     {
+
+        string url = "https://www.googleapis.com/books/v1/volumes?q=" + query + "&key=" + apiKey;
         using (WWW www = new WWW(url))
         {
             yield return www;
 
             bData = JsonUtility.FromJson<BookData>(www.text);
+            imgPath = bData.items[0].volumeInfo.imageLinks.smallThumbnail + ".png";
 
             Debug.Log(www.text);
 
+            tempText.text = "";
+            tempText2.text = "";
+            tempText.text += "Title: " + bData.items[0].volumeInfo.title + ":\n";
+            tempText2.text += "Author: " + bData.items[0].volumeInfo.authors[0] + ":\n";
+        }
 
-                tempText.text += "Data for " + bData.items[0].volumeInfo.title + ":\n";
-             //   tempText.text += "Data for " + bData.items[0].volumeInfo.imageLinks + ":\n";
 
+        Texture2D tex;
+        Sprite newSprite = new Sprite();
 
-            //        tempText.text += bData.name + "s landkode er " + bData.sys.country + ".\n";
-            //        tempText.text += "Temperaturen er " + wData.main.temp + " grader.\n";
-            //        tempText.text += "Fugtbarheden er " + wData.main.humidity + "%.\n";
-            //        if (wData.main.humidity > 65)
-            //        {
-            //            tempText.text += "Det er pisse klamt og fugtigt. Mine hænder er helt fedtede..\n";
-            //        }
-            //        tempText.text += "Vind hastigheden " + wData.wind.speed + " m/s.\n";
-            //        tempText.text += "Det er " + wData.clouds.all + "% overskyet.\n";
+        tex = new Texture2D(4000, 4000, TextureFormat.DXT1, false);
+
+        using (WWW imgwww = new WWW(imgPath))
+        {
+
+            yield return imgwww;
+
+            imgwww.LoadImageIntoTexture(tex);
+            newSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+            GetComponent<SpriteRenderer>().sprite = newSprite;
+
         }
     }
+    public void doSearch(string search)
+    {
+        query = search;
+        StartCoroutine("Start");
+    }
 }
+
